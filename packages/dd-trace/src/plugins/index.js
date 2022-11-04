@@ -11,6 +11,7 @@ module.exports = {
   get '@koa/router' () { return require('../../../datadog-plugin-koa/src') },
   get '@node-redis/client' () { return require('../../../datadog-plugin-redis/src') },
   get '@opensearch-project/opensearch' () { return require('../../../datadog-plugin-opensearch/src') },
+  get '@opentelemetry/sdk-trace-node' () { return require('../../../datadog-plugin-opentelemetry/src') },
   get '@redis/client' () { return require('../../../datadog-plugin-redis/src') },
   get 'amqp10' () { return require('../../../datadog-plugin-amqp10/src') },
   get 'amqplib' () { return require('../../../datadog-plugin-amqplib/src') },
