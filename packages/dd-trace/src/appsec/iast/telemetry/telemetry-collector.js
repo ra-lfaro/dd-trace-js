@@ -1,0 +1,148 @@
+'use strict'
+
+const { getMetric } = require('./metrics')
+const { log } = require('../../../log')
+const IAST_NAMESPACE = 'iast'
+const IAST_TELEMETRY_COLECTOR = Symbol('_dd.iast.telemetryCollector')
+
+class TelemetryCollector {
+  constructor (builders) {
+    this.handlers = new Map()
+    this.builders = builders
+  }
+
+  addMetric (metric, value, tag) {
+    this.getOrCreateHandler(metric).add(value, tag)
+  }
+
+  getOrCreateHandler (metric) {
+    let handler = this.handlers.get(metric)
+    if (!handler) {
+      handler = this.builders(metric)
+      this.handlers.set(metric, handler)
+    }
+    return handler
+  }
+
+  drainMetrics () {
+    const result = []
+    for (const handler of this.handlers.values()) {
+      const values = handler.drain()
+      if (values && values.length) {
+        result.push(...values)
+      }
+    }
+    this.handlers.clear()
+    return result
+  }
+
+  merge (metrics) {
+    for (const metricData of metrics) {
+      this.getOrCreateHandler(metricData.metric).merge(metricData)
+    }
+  }
+
+  reset () {
+    this.handlers = new Map()
+  }
+}
+
+const GLOBAL = new TelemetryCollector(metric => metric.hasRequestScope()
+  ? metric.aggregated()
+  : metric.conflated()
+)
+
+function getActiveRequestContext (context) {
+  if (context) return context
+
+  // TODO: get context from span!
+  return null
+}
+
+function getCollector (metric, context) {
+  if (metric && metric.hasRequestScope()) {
+    context = getActiveRequestContext(context)
+    if (context) {
+      const telemetryCollector = context[IAST_TELEMETRY_COLECTOR]
+      if (telemetryCollector) {
+        return telemetryCollector
+      }
+    }
+  }
+  return GLOBAL
+}
+
+function initTelemetryCollector (iastContext) {
+  if (!iastContext) return
+
+  const collector = new TelemetryCollector((metric) => metric.hasRequestScope()
+    ? metric.conflated()
+    : metric.delegating(GLOBAL)
+  )
+  iastContext[IAST_TELEMETRY_COLECTOR] = collector
+  return collector
+}
+
+function getTelemetryCollectorFromContext (iastContext) {
+  return iastContext && iastContext[IAST_TELEMETRY_COLECTOR]
+}
+
+function inc (metric, tag, context) {
+  add(metric, 1, tag, context)
+}
+
+function add (metric, value, tag, context) {
+  try {
+    metric = getMetric(metric)
+    if (!metric) return
+
+    const collector = getCollector(metric, context)
+    collector.addMetric(metric, value, tag)
+  } catch (e) {
+    log.error(e)
+  }
+}
+
+function getPayloadMetric (metric, points, tag) {
+  return {
+    metric: metric.name,
+    common: metric.common,
+    type: metric.type,
+    points: getPayloadPoints(points),
+    tag: getPayloadTag(metric, tag),
+    namespace: IAST_NAMESPACE
+  }
+}
+
+function getPayloadPoints (points) {
+  return points
+    .map(point => [point.timestamp, point.value])
+}
+
+function getPayloadTag (metric, tag) {
+  return metric.metricTag && tag ? `${metric.metricTag}:${tag}` : undefined
+}
+
+function drain () {
+  const drained = []
+  for (const metricData of GLOBAL.drainMetrics()) {
+    if (metricData.metric && metricData.points) {
+      drained.push(getPayloadMetric(metricData.metric, metricData.points, metricData.tag))
+    }
+  }
+  return drained
+}
+
+module.exports = {
+  inc,
+  add,
+  drain,
+  getCollector,
+  initTelemetryCollector,
+  getTelemetryCollectorFromContext,
+
+  TelemetryCollector,
+
+  GLOBAL,
+  IAST_TELEMETRY_COLECTOR
+}

@@ -19,6 +19,8 @@ describe('ldap-injection-analyzer', () => {
     './injection-analyzer': InjectionAnalyzer
   })
 
+  ldapInjectionAnalyzer.configure(true)
+
   it('should subscribe to ldapjs client search channel', () => {
     expect(ldapInjectionAnalyzer._subscriptions).to.have.lengthOf(1)
     expect(ldapInjectionAnalyzer._subscriptions[0]._channel.name).to.equals('datadog:ldapjs:client:search')
@@ -67,7 +69,7 @@ describe('ldap-injection-analyzer', () => {
       {
         './injection-analyzer': InjectionAnalyzer
       })
-    proxiedLdapInjectionAnalyzer.analyze(TAINTED_QUERY)
+    proxiedLdapInjectionAnalyzer.analyze(TAINTED_QUERY, iastContext)
     expect(addVulnerability).to.have.been.calledOnce
     expect(addVulnerability).to.have.been.calledWithMatch({}, { type: 'LDAP_INJECTION' })
   })

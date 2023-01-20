@@ -20,6 +20,8 @@ describe('IAST Taint tracking plugin', () => {
       './operations': sinon.spy(taintTrackingOperations),
       '../../../../../datadog-core': datadogCore
     })
+
+    taintTrackingPlugin.onConfigure()
   })
 
   afterEach(sinon.restore)
@@ -46,7 +48,7 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, null, iastContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(iastContext, objToBeTainted, originType)
   })
 
@@ -67,7 +69,7 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(
       iastContext,
       objToBeTainted[propertyToBeTainted],
@@ -94,7 +96,7 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(
       iastContext,
       objToBeTainted[propertyToBeTainted],

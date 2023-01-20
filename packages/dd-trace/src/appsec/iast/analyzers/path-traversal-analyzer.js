@@ -1,12 +1,10 @@
 'use strict'
-const { getIastContext } = require('../iast-context')
-const { storage } = require('../../../../../datadog-core')
 const InjectionAnalyzer = require('./injection-analyzer')
 
 class PathTraversalAnalyzer extends InjectionAnalyzer {
   constructor () {
     super('PATH_TRAVERSAL')
-    this.addSub('apm:fs:operation:start', obj => {
+    this.addSub({ channelName: 'apm:fs:operation:start' }, (obj, iastContext) => {
       const pathArguments = []
       if (obj.dest) {
         pathArguments.push(obj.dest)
@@ -35,12 +33,11 @@ class PathTraversalAnalyzer extends InjectionAnalyzer {
       if (obj.target) {
         pathArguments.push(obj.target)
       }
-      this.analyze(pathArguments)
+      this.analyze(pathArguments, iastContext)
     })
   }
 
-  analyze (value) {
-    const iastContext = getIastContext(storage.getStore())
+  analyze (value, iastContext) {
     if (!iastContext) {
       return
     }

@@ -2,12 +2,17 @@
 
 const tracerVersion = require('../../../../package.json').version
 const os = require('os')
-const dependencies = require('./dependencies')
 const { sendData } = require('./send-data')
+const dependencies = require('./dependencies')
+const metrics = require('./metrics')
 
 const HEARTBEAT_INTERVAL = process.env.DD_TELEMETRY_HEARTBEAT_INTERVAL
   ? Number(process.env.DD_TELEMETRY_HEARTBEAT_INTERVAL) * 1000
   : 60000
+
+const DD_TELEMETRY_METRICS_POLL_SECONDS = process.env.DD_TELEMETRY_METRICS_POLL_SECONDS
+  ? Number(process.env.DD_TELEMETRY_METRICS_POLL_SECONDS) * 1000
+  : 10000
 
 let config
 let pluginManager
@@ -112,6 +117,7 @@ function start (aConfig, thePluginManager) {
   application = createAppObject()
   host = createHostObject()
   dependencies.start(config, application, host)
+  metrics.start(config, application, host, DD_TELEMETRY_METRICS_POLL_SECONDS)
   sendData(config, application, host, 'app-started', appStarted())
   interval = setInterval(() => {
     sendData(config, application, host, 'app-heartbeat')
@@ -126,6 +132,7 @@ function stop () {
   }
   clearInterval(interval)
   process.removeListener('beforeExit', onBeforeExit)
+  metrics.stop()
 }
 
 function updateIntegrations () {

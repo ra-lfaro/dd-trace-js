@@ -29,14 +29,17 @@ describe('dependencies', () => {
       requirePackageJson = sinon.stub()
       sendData = sinon.stub()
       dependencies = proxyquire('../../src/telemetry/dependencies', {
-        './send-data': { sendData },
         '../require-package-json': requirePackageJson
       })
+      dependencies.send = function (payload) {
+        sendData(this.config, this.application, this.host, this.reqType, payload)
+      }.bind(dependencies)
       global.setImmediate = function (callback) { callback() }
     })
 
     afterEach(() => {
       dependencies.stop()
+      sendData.reset()
       global.setImmediate = originalSetImmediate
     })
 

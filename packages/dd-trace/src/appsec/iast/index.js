@@ -6,6 +6,7 @@ const overheadController = require('./overhead-controller')
 const dc = require('diagnostics_channel')
 const iastContextFunctions = require('./iast-context')
 const { enableTaintTracking, disableTaintTracking, createTransaction, removeTransaction } = require('./taint-tracking')
+const telemetry = require('./telemetry')
 
 const IAST_ENABLED_TAG_KEY = '_dd.iast.enabled'
 
@@ -15,8 +16,9 @@ const requestStart = dc.channel('dd-trace:incomingHttpRequestStart')
 const requestClose = dc.channel('dd-trace:incomingHttpRequestEnd')
 
 function enable (config, _tracer) {
+  telemetry.configure(config)
   enableAllAnalyzers()
-  enableTaintTracking()
+  enableTaintTracking(telemetry.verbosity)
   requestStart.subscribe(onIncomingHttpRequestStart)
   requestClose.subscribe(onIncomingHttpRequestEnd)
   overheadController.configure(config.iast)
@@ -25,6 +27,7 @@ function enable (config, _tracer) {
 }
 
 function disable () {
+  telemetry.stop()
   disableAllAnalyzers()
   disableTaintTracking()
   overheadController.finishGlobalContext()
@@ -44,6 +47,7 @@ function onIncomingHttpRequestStart (data) {
           const iastContext = iastContextFunctions.saveIastContext(store, topContext, { rootSpan, req: data.req })
           createTransaction(rootSpan.context().toSpanId(), iastContext)
           overheadController.initializeRequestContext(iastContext)
+          telemetry.onRequestStarted(iastContext)
         }
         if (rootSpan.addTags) {
           rootSpan.addTags({
@@ -65,6 +69,7 @@ function onIncomingHttpRequestEnd (data) {
       const rootSpan = iastContext.rootSpan
       sendVulnerabilities(vulnerabilities, rootSpan)
       removeTransaction(iastContext)
+      telemetry.onRequestEnded(iastContext, iastContext.rootSpan)
     }
     // TODO web.getContext(data.req) is required when the request is aborted
     if (iastContextFunctions.cleanIastContext(store, topContext, iastContext)) {
