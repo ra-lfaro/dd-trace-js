@@ -13,6 +13,7 @@ const testSuiteStartCh = channel('ci:jest:test-suite:start')
 const testSuiteFinishCh = channel('ci:jest:test-suite:finish')
 
 const workerReportCh = channel('ci:jest:worker-report')
+const workerReportCoverageCh = channel('ci:jest:worker-report:coverage')
 
 const testSuiteCodeCoverageCh = channel('ci:jest:test-suite:code-coverage')
 
@@ -185,40 +186,42 @@ function cliWrapper (cli, jestVersion) {
       return runCLI.apply(this, arguments)
     }
 
-    sessionAsyncResource.runInAsyncScope(() => {
-      jestItrConfigurationCh.publish({ onDone })
-    })
+    // sessionAsyncResource.runInAsyncScope(() => {
+    //   jestItrConfigurationCh.publish({ onDone })
+    // })
 
-    try {
-      const { err, itrConfig } = await configurationPromise
-      if (!err) {
-        isCodeCoverageEnabled = itrConfig.isCodeCoverageEnabled
-        isSuitesSkippingEnabled = itrConfig.isSuitesSkippingEnabled
-      }
-    } catch (err) {
-      log.error(err)
-    }
+    // try {
+    //   const { err, itrConfig } = await configurationPromise
+    //   if (!err) {
+    //     isCodeCoverageEnabled = itrConfig.isCodeCoverageEnabled
+    //     isSuitesSkippingEnabled = itrConfig.isSuitesSkippingEnabled
+    //   }
+    // } catch (err) {
+    //   log.error(err)
+    // }
 
-    if (isSuitesSkippingEnabled) {
-      const skippableSuitesPromise = new Promise((resolve) => {
-        onDone = resolve
-      })
+    // if (isSuitesSkippingEnabled) {
+    //   const skippableSuitesPromise = new Promise((resolve) => {
+    //     onDone = resolve
+    //   })
 
-      sessionAsyncResource.runInAsyncScope(() => {
-        skippableSuitesCh.publish({ onDone })
-      })
+    //   sessionAsyncResource.runInAsyncScope(() => {
+    //     skippableSuitesCh.publish({ onDone })
+    //   })
 
-      try {
-        const { err, skippableSuites: receivedSkippableSuites } = await skippableSuitesPromise
-        if (!err) {
-          skippableSuites = receivedSkippableSuites
-        }
-      } catch (err) {
-        log.error(err)
-      }
-    }
+    //   try {
+    //     const { err, skippableSuites: receivedSkippableSuites } = await skippableSuitesPromise
+    //     if (!err) {
+    //       skippableSuites = receivedSkippableSuites
+    //     }
+    //   } catch (err) {
+    //     log.error(err)
+    //   }
+    // }
+    isCodeCoverageEnabled = true
     const isSuitesSkipped = !!skippableSuites.length
 
+    console.log('skippableSuites.length', skippableSuites.length)
     const processArgv = process.argv.slice(2).join(' ')
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionStartCh.publish({ command: `jest ${processArgv}`, frameworkVersion: jestVersion })
@@ -540,9 +543,14 @@ addHook({
   const ChildProcessWorker = childProcessWorker.default
   shimmer.wrap(ChildProcessWorker.prototype, '_onMessage', _onMessage => function () {
     const [code, data] = arguments[0]
-    if (code === 60) { // datadog payload
+    if (code === 60) { // datadog trace payload
       // received
       workerReportCh.publish(data)
+      return
+    }
+    if (code === 61) { // datadog coverage payload
+      // received
+      workerReportCoverageCh.publish(data)
       return
     }
     return _onMessage.apply(this, arguments)

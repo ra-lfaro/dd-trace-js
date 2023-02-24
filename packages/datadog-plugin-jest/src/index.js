@@ -110,6 +110,17 @@ class JestPlugin extends CiPlugin {
       this.tracer._exporter.export(formattedTraces)
     })
 
+    this.addSub('ci:jest:worker-report:coverage', data => {
+      const formattedCoverages = JSON.parse(data).map(coverage => ({
+        traceId: id(coverage.traceId),
+        spanId: id(coverage.spanId),
+        files: coverage.coverageFiles
+      }))
+      formattedCoverages.forEach(formattedCoverage => {
+        this.tracer._exporter.exportCoverageDirect(formattedCoverage)
+      })
+    })
+
     this.addSub('ci:jest:test-suite:finish', ({ status, errorMessage }) => {
       this.testSuiteSpan.setTag(TEST_STATUS, status)
       if (errorMessage) {
