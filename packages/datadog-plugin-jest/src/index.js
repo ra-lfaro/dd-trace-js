@@ -14,6 +14,7 @@ const {
   TEST_FRAMEWORK_VERSION
 } = require('../../dd-trace/src/plugins/util/test')
 const { COMPONENT } = require('../../dd-trace/src/constants')
+const id = require('../../dd-trace/src/id')
 
 // https://github.com/facebook/jest/blob/d6ad15b0f88a05816c2fe034dd6900d28315d570/packages/jest-worker/src/types.ts#L38
 const CHILD_MESSAGE_END = 2
@@ -31,13 +32,8 @@ class JestPlugin extends CiPlugin {
       if (message === CHILD_MESSAGE_END) {
         this.testSuiteSpan.finish()
         finishAllTraceSpans(this.testSuiteSpan)
-        this.tracer._exporter.flush(() => {
-          // eslint-disable-next-line
-          // https://github.com/facebook/jest/blob/24ed3b5ecb419c023ee6fdbc838f07cc028fc007/packages/jest-worker/src/workers/processChild.ts#L118-L133
-          // Only after the flush is done we clean up open handles
-          // so the worker process can hopefully exit gracefully
-          process.removeListener('message', handler)
-        })
+        this.tracer._exporter.flush()
+        process.removeListener('message', handler)
       }
     }
     process.on('message', handler)
@@ -50,7 +46,8 @@ class JestPlugin extends CiPlugin {
       isSuitesSkipped,
       isSuitesSkippingEnabled,
       isCodeCoverageEnabled,
-      testCodeCoverageLinesTotal
+      testCodeCoverageLinesTotal,
+      onDone
     }) => {
       this.testSessionSpan.setTag(TEST_STATUS, status)
       this.testModuleSpan.setTag(TEST_STATUS, status)
@@ -64,7 +61,7 @@ class JestPlugin extends CiPlugin {
       this.testModuleSpan.finish()
       this.testSessionSpan.finish()
       finishAllTraceSpans(this.testSessionSpan)
-      this.tracer._exporter.flush()
+      this.tracer._exporter.flush(onDone)
     })
 
     // Test suites can be run in a different process from jest's main one.
@@ -102,6 +99,17 @@ class JestPlugin extends CiPlugin {
       })
     })
 
+    this.addSub('ci:jest:worker-report', data => {
+      const formattedTraces = JSON.parse(data).map(span => ({
+        ...span,
+        span_id: id(span.span_id),
+        trace_id: id(span.trace_id),
+        parent_id: id(span.parent_id)
+      }))
+
+      this.tracer._exporter.export(formattedTraces)
+    })
+
     this.addSub('ci:jest:test-suite:finish', ({ status, errorMessage }) => {
       this.testSuiteSpan.setTag(TEST_STATUS, status)
       if (errorMessage) {
@@ -111,6 +119,7 @@ class JestPlugin extends CiPlugin {
       // Suites potentially run in a different process than the session,
       // so calling finishAllTraceSpans on the session span is not enough
       finishAllTraceSpans(this.testSuiteSpan)
+      this.tracer._exporter.flush()
     })
 
     /**

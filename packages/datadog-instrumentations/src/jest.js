@@ -12,6 +12,8 @@ const testSessionConfigurationCh = channel('ci:jest:session:configuration')
 const testSuiteStartCh = channel('ci:jest:test-suite:start')
 const testSuiteFinishCh = channel('ci:jest:test-suite:finish')
 
+const workerReportCh = channel('ci:jest:worker-report')
+
 const testSuiteCodeCoverageCh = channel('ci:jest:test-suite:code-coverage')
 
 const testStartCh = channel('ci:jest:test:start')
@@ -215,7 +217,6 @@ function cliWrapper (cli, jestVersion) {
         log.error(err)
       }
     }
-
     const isSuitesSkipped = !!skippableSuites.length
 
     const processArgv = process.argv.slice(2).join(' ')
@@ -235,15 +236,22 @@ function cliWrapper (cli, jestVersion) {
       // ignore errors
     }
 
+    const flushPromise = new Promise((resolve) => {
+      onDone = resolve
+    })
+
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionFinishCh.publish({
         status: success ? 'pass' : 'fail',
         isSuitesSkipped,
         isSuitesSkippingEnabled,
         isCodeCoverageEnabled,
-        testCodeCoverageLinesTotal
+        testCodeCoverageLinesTotal,
+        onDone
       })
     })
+
+    await flushPromise
 
     return result
   })
@@ -482,7 +490,6 @@ const JEST_WORKER_SHUTDOWN_TIMEOUT = 20
 // https://github.com/facebook/jest/blob/d6ad15b0f88a05816c2fe034dd6900d28315d570/packages/jest-worker/src/types.ts#L38
 const CHILD_MESSAGE_END = 2
 
-// 25.1.0 is where waitForExit
 addHook({
   name: 'jest-worker',
   versions: ['>=24.9.0'],
@@ -492,7 +499,9 @@ addHook({
   shimmer.wrap(BaseWorkerPool.prototype, 'end', end => async function () {
     let timeoutId
 
+    // console.log('one worker', this._workers[0])
     try {
+      console.log('trying to end everything')
       // End everything: we listen to this message and attempt to flush everything
       this._workers.forEach(worker => {
         worker.send([CHILD_MESSAGE_END], () => {}, () => {}, () => {})
@@ -509,12 +518,34 @@ addHook({
       ))
 
       // If the workers are able to shut down gracefully before the timeout, we proceed
-      await Promise.race([workersWaitForExitPromise, killPromise])
+      const res = await Promise.race([workersWaitForExitPromise, killPromise])
+
+      console.log('promise result', res)
+
       clearTimeout(timeoutId)
     } catch (e) {
+      console.log('error??', e)
       // ignore error
     }
     return end.apply(this, arguments)
   })
   return baseWorkerPool
+})
+
+addHook({
+  name: 'jest-worker',
+  versions: ['>=24.9.0'],
+  file: 'build/workers/ChildProcessWorker.js'
+}, (childProcessWorker) => {
+  const ChildProcessWorker = childProcessWorker.default
+  shimmer.wrap(ChildProcessWorker.prototype, '_onMessage', _onMessage => function () {
+    const [code, data] = arguments[0]
+    if (code === 60) { // datadog payload
+      // received
+      workerReportCh.publish(data)
+      return
+    }
+    return _onMessage.apply(this, arguments)
+  })
+  return childProcessWorker
 })
