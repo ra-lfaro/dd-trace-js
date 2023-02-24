@@ -215,7 +215,9 @@ function cliWrapper (cli, jestVersion) {
         log.error(err)
       }
     }
+    console.log('skippableSuites.length', skippableSuites.length)
 
+    skippableSuites = []
     const isSuitesSkipped = !!skippableSuites.length
 
     const processArgv = process.argv.slice(2).join(' ')
@@ -261,6 +263,7 @@ function coverageReporterWrapper (coverageReporter) {
    * This calculation adds no value, so we'll skip it.
    */
   shimmer.wrap(CoverageReporter.prototype, '_addUntestedFiles', addUntestedFiles => async function () {
+    return Promise.resolve()
     if (isSuitesSkippingEnabled) {
       return Promise.resolve()
     }
@@ -364,7 +367,7 @@ function configureTestEnvironment (readConfigsResult) {
     }
     readConfigsResult.globalConfig = globalConfig
   }
-  if (isSuitesSkippingEnabled) {
+  if (true || isSuitesSkippingEnabled) {
     // If suite skipping is enabled, the code coverage results are not going to be relevant,
     // so we do not show them.
     // Also, we might skip every test, so we need to pass `passWithNoTests`
@@ -482,7 +485,6 @@ const JEST_WORKER_SHUTDOWN_TIMEOUT = 20
 // https://github.com/facebook/jest/blob/d6ad15b0f88a05816c2fe034dd6900d28315d570/packages/jest-worker/src/types.ts#L38
 const CHILD_MESSAGE_END = 2
 
-// 25.1.0 is where waitForExit
 addHook({
   name: 'jest-worker',
   versions: ['>=24.9.0'],
@@ -492,7 +494,9 @@ addHook({
   shimmer.wrap(BaseWorkerPool.prototype, 'end', end => async function () {
     let timeoutId
 
+    // console.log('one worker', this._workers[0])
     try {
+      console.log('trying to end everything')
       // End everything: we listen to this message and attempt to flush everything
       this._workers.forEach(worker => {
         worker.send([CHILD_MESSAGE_END], () => {}, () => {}, () => {})
@@ -509,12 +513,43 @@ addHook({
       ))
 
       // If the workers are able to shut down gracefully before the timeout, we proceed
-      await Promise.race([workersWaitForExitPromise, killPromise])
+      const res = await Promise.race([workersWaitForExitPromise, killPromise])
+
+      console.log('promise result', res)
+
       clearTimeout(timeoutId)
     } catch (e) {
+      console.log('error??', e)
       // ignore error
     }
     return end.apply(this, arguments)
   })
   return baseWorkerPool
 })
+//_performRestartIfRequired
+// addHook({
+//   name: 'jest-worker',
+//   versions: ['>=24.9.0'],
+//   file: 'build/workers/ChildProcessWorker.js'
+// }, (childProcessWorker) => {
+//   const ChildProcessWorker = childProcessWorker.default
+//   shimmer.wrap(ChildProcessWorker.prototype, '_performRestartIfRequired', _performRestartIfRequired => function () {
+//     if (this._memoryUsageCheck) {
+//       this._memoryUsageCheck = false
+
+//       const limit = Math.floor(this._childIdleMemoryUsageLimit)
+
+//       if (
+//         limit &&
+//         this._childIdleMemoryUsage &&
+//         this._childIdleMemoryUsage > limit
+//       ) {
+//         console.log('this._childIdleMemoryUsage', this._childIdleMemoryUsage)
+//         console.log('reaching the limit yeah!!!')
+//       }
+//     }
+
+//     return
+//   })
+//   return childProcessWorker
+// })
