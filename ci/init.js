@@ -12,6 +12,8 @@ const options = {
   flushInterval: 5000
 }
 
+console.log('initizialing tracer in dd-trace/ci/init')
+
 let shouldInit = true
 
 const isAgentlessEnabled = isTrue(process.env.DD_CIVISIBILITY_AGENTLESS_ENABLED)
