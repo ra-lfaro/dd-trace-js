@@ -476,3 +476,21 @@ addHook({
   versions: ['>=24.8.0'],
   file: 'build/jasmineAsyncInstall.js'
 }, jasmineAsyncInstallWraper)
+
+// Maximum time we allow the workers to shutdown
+const JEST_WORKER_SHUTDOWN_TIMEOUT = 20
+// https://github.com/facebook/jest/blob/d6ad15b0f88a05816c2fe034dd6900d28315d570/packages/jest-worker/src/types.ts#L38
+const CHILD_MESSAGE_END = 2
+
+addHook({
+  name: 'jest-worker',
+  versions: ['>=24.9.0'],
+  file: 'build/base/BaseWorkerPool.js'
+}, (baseWorkerPool) => {
+  const BaseWorkerPool = baseWorkerPool.default ? baseWorkerPool.default : baseWorkerPool
+  shimmer.wrap(BaseWorkerPool.prototype, 'end', end => async function () {
+    console.log('trying to end')
+    return end.apply(this, arguments)
+  })
+  return baseWorkerPool
+})
