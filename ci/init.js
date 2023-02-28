@@ -37,7 +37,7 @@ so dd-trace will not be initialized.`)
 
 if (isJestWorker) {
   options.experimental = {
-    exporter: 'interprocess'
+    exporter: 'jest_worker'
   }
 }
 
