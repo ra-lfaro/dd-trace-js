@@ -4,7 +4,7 @@ const AgentExporter = require('./exporters/agent')
 const LogExporter = require('./exporters/log')
 const AgentlessCiVisibilityExporter = require('./ci-visibility/exporters/agentless')
 const AgentProxyCiVisibilityExporter = require('./ci-visibility/exporters/agent-proxy')
-const InterProcessCiVisibilityExporter = require('./ci-visibility/exporters/interprocess')
+const JestWorkerCiVisibilityExporter = require('./ci-visibility/exporters/jest-worker')
 const exporters = require('../../../ext/exporters')
 const fs = require('fs')
 const constants = require('./constants')
@@ -22,8 +22,8 @@ module.exports = name => {
       return AgentlessCiVisibilityExporter
     case exporters.AGENT_PROXY:
       return AgentProxyCiVisibilityExporter
-    case exporters.INTERPROCESS:
-      return InterProcessCiVisibilityExporter
+    case exporters.JEST_WORKER:
+      return JestWorkerCiVisibilityExporter
     default:
       return inAWSLambda && !usingLambdaExtension ? LogExporter : AgentExporter
   }

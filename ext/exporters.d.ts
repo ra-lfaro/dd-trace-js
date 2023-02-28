@@ -3,7 +3,7 @@ declare const exporters: {
   AGENT: 'agent',
   DATADOG: 'datadog',
   AGENT_PROXY: 'agent_proxy',
-  INTERPROCESS: 'interprocess'
+  JEST_WORKER: 'jest_worker'
 }
 
 export = exporters

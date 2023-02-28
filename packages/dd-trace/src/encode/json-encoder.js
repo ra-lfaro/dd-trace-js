@@ -1,6 +1,7 @@
-class InterprocessEncoder {
-  constructor (writer) {
-    this._writer = writer
+'use strict'
+
+class JSONEncoder {
+  constructor () {
     this.payloads = []
   }
 
@@ -23,4 +24,4 @@ class InterprocessEncoder {
   }
 }
 
-module.exports = { InterprocessEncoder }
+module.exports = { JSONEncoder }
