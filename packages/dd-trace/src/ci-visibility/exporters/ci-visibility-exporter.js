@@ -178,6 +178,10 @@ class CiVisibilityExporter extends AgentInfoExporter {
     this._export(trace)
   }
 
+  exportCoverageDirect (formattedCoverage) {
+    this._export(formattedCoverage, this._coverageWriter, '_coverageTimer')
+  }
+
   exportCoverage (coveragePayload) {
     // Until it's initialized, we just store the coverages as is
     if (!this._isInitialized) {
