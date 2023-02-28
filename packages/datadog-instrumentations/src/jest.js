@@ -264,18 +264,18 @@ function cliWrapper (cli, jestVersion) {
 }
 
 function coverageReporterWrapper (coverageReporter) {
-  const CoverageReporter = coverageReporter.default ? coverageReporter.default : coverageReporter
+  // const CoverageReporter = coverageReporter.default ? coverageReporter.default : coverageReporter
 
-  /**
-   * If ITR is active, we're running fewer tests, so of course the total code coverage is reduced.
-   * This calculation adds no value, so we'll skip it.
-   */
-  shimmer.wrap(CoverageReporter.prototype, '_addUntestedFiles', addUntestedFiles => async function () {
-    if (isSuitesSkippingEnabled) {
-      return Promise.resolve()
-    }
-    return addUntestedFiles.apply(this, arguments)
-  })
+  // /**
+  //  * If ITR is active, we're running fewer tests, so of course the total code coverage is reduced.
+  //  * This calculation adds no value, so we'll skip it.
+  //  */
+  // shimmer.wrap(CoverageReporter.prototype, '_addUntestedFiles', addUntestedFiles => async function () {
+  //   if (isSuitesSkippingEnabled) {
+  //     return Promise.resolve()
+  //   }
+  //   return addUntestedFiles.apply(this, arguments)
+  // })
 
   return coverageReporter
 }
