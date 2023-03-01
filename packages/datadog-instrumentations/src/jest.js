@@ -25,7 +25,6 @@ const testErrCh = channel('ci:jest:test:err')
 const skippableSuitesCh = channel('ci:jest:test-suite:skippable')
 const jestItrConfigurationCh = channel('ci:jest:itr-configuration')
 
-let skippableSuites = []
 let isCodeCoverageEnabled = false
 let isSuitesSkippingEnabled = false
 
@@ -200,27 +199,6 @@ function cliWrapper (cli, jestVersion) {
       log.error(err)
     }
 
-    if (isSuitesSkippingEnabled) {
-      const skippableSuitesPromise = new Promise((resolve) => {
-        onDone = resolve
-      })
-
-      sessionAsyncResource.runInAsyncScope(() => {
-        skippableSuitesCh.publish({ onDone })
-      })
-
-      try {
-        const { err, skippableSuites: receivedSkippableSuites } = await skippableSuitesPromise
-        if (!err) {
-          skippableSuites = receivedSkippableSuites
-        }
-      } catch (err) {
-        log.error(err)
-      }
-    }
-    const isSuitesSkipped = !!skippableSuites.length
-
-    // console.log('skippableSuites.length', skippableSuites.length)
     const processArgv = process.argv.slice(2).join(' ')
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionStartCh.publish({ command: `jest ${processArgv}`, frameworkVersion: jestVersion })
@@ -238,22 +216,15 @@ function cliWrapper (cli, jestVersion) {
       // ignore errors
     }
 
-    // const flushPromise = new Promise((resolve) => {
-    //   onDone = resolve
-    // })
-
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionFinishCh.publish({
         status: success ? 'pass' : 'fail',
-        isSuitesSkipped,
         isSuitesSkippingEnabled,
         isCodeCoverageEnabled,
         testCodeCoverageLinesTotal,
         onDone
       })
     })
-
-    // await flushPromise
 
     return result
   })
@@ -264,18 +235,18 @@ function cliWrapper (cli, jestVersion) {
 }
 
 function coverageReporterWrapper (coverageReporter) {
-  // const CoverageReporter = coverageReporter.default ? coverageReporter.default : coverageReporter
+  const CoverageReporter = coverageReporter.default ? coverageReporter.default : coverageReporter
 
-  // /**
-  //  * If ITR is active, we're running fewer tests, so of course the total code coverage is reduced.
-  //  * This calculation adds no value, so we'll skip it.
-  //  */
-  // shimmer.wrap(CoverageReporter.prototype, '_addUntestedFiles', addUntestedFiles => async function () {
-  //   if (isSuitesSkippingEnabled) {
-  //     return Promise.resolve()
-  //   }
-  //   return addUntestedFiles.apply(this, arguments)
-  // })
+  /**
+   * If ITR is active, we're running fewer tests, so of course the total code coverage is reduced.
+   * This calculation adds no value, so we'll skip it.
+   */
+  shimmer.wrap(CoverageReporter.prototype, '_addUntestedFiles', addUntestedFiles => async function () {
+    if (isSuitesSkippingEnabled) {
+      return Promise.resolve()
+    }
+    return addUntestedFiles.apply(this, arguments)
+  })
 
   return coverageReporter
 }
@@ -418,6 +389,27 @@ addHook({
   const SearchSource = searchSourcePackage.default ? searchSourcePackage.default : searchSourcePackage
 
   shimmer.wrap(SearchSource.prototype, 'getTestPaths', getTestPaths => async function () {
+    let onDone
+    let skippableSuites = []
+    if (isSuitesSkippingEnabled) {
+      const skippableSuitesPromise = new Promise((resolve) => {
+        onDone = resolve
+      })
+
+      sessionAsyncResource.runInAsyncScope(() => {
+        skippableSuitesCh.publish({ onDone })
+      })
+      try {
+        const { err, skippableSuites: receivedSkippableSuites } = await skippableSuitesPromise
+        if (!err) {
+          skippableSuites = receivedSkippableSuites
+        }
+      } catch (err) {
+        log.error(err)
+      }
+    }
+    console.log('skippableSuites.length', skippableSuites.length)
+
     if (!skippableSuites.length) {
       return getTestPaths.apply(this, arguments)
     }

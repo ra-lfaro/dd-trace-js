@@ -43,6 +43,8 @@ module.exports = class CiPlugin extends Plugin {
       this.tracer._exporter.getSkippableSuites(this.testConfiguration, (err, skippableSuites) => {
         if (err) {
           log.error(`Error fetching skippable suites: ${err.message}`)
+        } else {
+          this.isSuitesSkipped = !!skippableSuites.length
         }
         onDone({ err, skippableSuites })
       })

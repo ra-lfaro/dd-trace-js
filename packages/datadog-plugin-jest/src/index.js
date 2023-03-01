@@ -43,7 +43,6 @@ class JestPlugin extends CiPlugin {
 
     this.addSub('ci:jest:session:finish', ({
       status,
-      isSuitesSkipped,
       isSuitesSkippingEnabled,
       isCodeCoverageEnabled,
       testCodeCoverageLinesTotal,
@@ -55,7 +54,12 @@ class JestPlugin extends CiPlugin {
       addIntelligentTestRunnerSpanTags(
         this.testSessionSpan,
         this.testModuleSpan,
-        { isSuitesSkipped, isSuitesSkippingEnabled, isCodeCoverageEnabled, testCodeCoverageLinesTotal }
+        {
+          isSuitesSkipped: this.isSuitesSkipped,
+          isSuitesSkippingEnabled,
+          isCodeCoverageEnabled,
+          testCodeCoverageLinesTotal
+        }
       )
 
       this.testModuleSpan.finish()
