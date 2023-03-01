@@ -220,7 +220,7 @@ function cliWrapper (cli, jestVersion) {
     }
     const isSuitesSkipped = !!skippableSuites.length
 
-    console.log('skippableSuites.length', skippableSuites.length)
+    // console.log('skippableSuites.length', skippableSuites.length)
     const processArgv = process.argv.slice(2).join(' ')
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionStartCh.publish({ command: `jest ${processArgv}`, frameworkVersion: jestVersion })
@@ -238,9 +238,9 @@ function cliWrapper (cli, jestVersion) {
       // ignore errors
     }
 
-    const flushPromise = new Promise((resolve) => {
-      onDone = resolve
-    })
+    // const flushPromise = new Promise((resolve) => {
+    //   onDone = resolve
+    // })
 
     sessionAsyncResource.runInAsyncScope(() => {
       testSessionFinishCh.publish({
@@ -253,7 +253,7 @@ function cliWrapper (cli, jestVersion) {
       })
     })
 
-    await flushPromise
+    // await flushPromise
 
     return result
   })
@@ -432,9 +432,11 @@ addHook({
       return !skippableSuites.includes(relativePath)
     })
 
+    testPaths.tests = filteredTests
+
     skippableSuites = []
 
-    return { ...testPaths, tests: filteredTests }
+    return testPaths
   })
 
   return searchSourcePackage
@@ -497,40 +499,35 @@ addHook({
   versions: ['>=24.9.0'],
   file: 'build/base/BaseWorkerPool.js'
 }, (baseWorkerPool) => {
-  const BaseWorkerPool = baseWorkerPool.default ? baseWorkerPool.default : baseWorkerPool
-  shimmer.wrap(BaseWorkerPool.prototype, 'end', end => async function () {
-    let timeoutId
+  // const BaseWorkerPool = baseWorkerPool.default ? baseWorkerPool.default : baseWorkerPool
+  // shimmer.wrap(BaseWorkerPool.prototype, 'end', end => async function () {
+  //   let timeoutId
 
-    // console.log('one worker', this._workers[0])
-    try {
-      console.log('trying to end everything')
-      // End everything: we listen to this message and attempt to flush everything
-      this._workers.forEach(worker => {
-        worker.send([CHILD_MESSAGE_END], () => {}, () => {}, () => {})
-      })
+  //   try {
+  //     // End everything: we listen to this message and attempt to flush everything
+  //     this._workers.forEach(worker => {
+  //       worker.send([CHILD_MESSAGE_END], () => {}, () => {}, () => {})
+  //     })
 
-      const killPromise = new Promise((resolve) => {
-        timeoutId = setTimeout(() => {
-          resolve()
-        }, JEST_WORKER_SHUTDOWN_TIMEOUT * 1000)
-      })
+  //     const killPromise = new Promise((resolve) => {
+  //       timeoutId = setTimeout(() => {
+  //         resolve()
+  //       }, JEST_WORKER_SHUTDOWN_TIMEOUT * 1000)
+  //     })
 
-      const workersWaitForExitPromise = Promise.all(this._workers.map(worker =>
-        worker.waitForExit()
-      ))
+  //     const workersWaitForExitPromise = Promise.all(this._workers.map(worker =>
+  //       worker.waitForExit()
+  //     ))
 
-      // If the workers are able to shut down gracefully before the timeout, we proceed
-      const res = await Promise.race([workersWaitForExitPromise, killPromise])
+  //     // If the workers are able to shut down gracefully before the timeout, we proceed
+  //     await Promise.race([workersWaitForExitPromise, killPromise])
 
-      console.log('promise result', res)
-
-      clearTimeout(timeoutId)
-    } catch (e) {
-      console.log('error??', e)
-      // ignore error
-    }
-    return end.apply(this, arguments)
-  })
+  //     clearTimeout(timeoutId)
+  //   } catch (e) {
+  //     // ignore error
+  //   }
+  //   return end.apply(this, arguments)
+  // })
   return baseWorkerPool
 })
 

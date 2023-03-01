@@ -28,15 +28,15 @@ class JestPlugin extends CiPlugin {
     super(...args)
 
     // Used to handle the end of a jest worker to be able to flush
-    const handler = ([message]) => {
-      if (message === CHILD_MESSAGE_END) {
-        this.testSuiteSpan.finish()
-        finishAllTraceSpans(this.testSuiteSpan)
-        this.tracer._exporter.flush()
-        process.removeListener('message', handler)
-      }
-    }
-    process.on('message', handler)
+    // const handler = ([message]) => {
+    //   if (message === CHILD_MESSAGE_END) {
+    //     this.testSuiteSpan.finish()
+    //     finishAllTraceSpans(this.testSuiteSpan)
+    //     this.tracer._exporter.flush()
+    //     process.removeListener('message', handler)
+    //   }
+    // }
+    // process.on('message', handler)
 
     this.testEnvironmentMetadata = getTestEnvironmentMetadata('jest', this.config)
     this.codeOwnersEntries = getCodeOwnersFileEntries()
