@@ -38,11 +38,11 @@ class PathTraversalAnalyzer extends InjectionAnalyzer {
   }
 
   analyze (value, iastPluginContext) {
-    if (this._invalidContext(iastPluginContext)) {
+    const iastContext = iastPluginContext.iastContext
+    if (!iastContext) {
       return
     }
 
-    const iastContext = iastPluginContext.iastContext
     if (value && value.constructor === Array) {
       for (const val of value) {
         if (this._isVulnerable(val, iastContext)) {
