@@ -9,7 +9,7 @@ class CommandInjectionAnalyzer extends InjectionAnalyzer {
   onConfigure () {
     this.addSub(
       { channelName: 'datadog:child_process:execution:start' },
-      ({ command }, iastContext) => this.analyze(command, iastContext)
+      ({ command }, iastPluginContext) => this.analyze(command, iastPluginContext)
     )
   }
 }

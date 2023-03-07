@@ -47,6 +47,10 @@ describe('weak-hash-analyzer', () => {
         }
       }
     }
+    const iastPluginContext = {
+      store: {},
+      iastContext
+    }
     const ProxyAnalyzer = proxyquire('../../../../src/appsec/iast/analyzers/vulnerability-analyzer', {
       '../iast-context': {
         getIastContext: () => iastContext
@@ -58,7 +62,7 @@ describe('weak-hash-analyzer', () => {
       {
         './vulnerability-analyzer': ProxyAnalyzer
       })
-    proxiedWeakHashAnalyzer.analyze(VULNERABLE_ALGORITHM, iastContext)
+    proxiedWeakHashAnalyzer.analyze(VULNERABLE_ALGORITHM, iastPluginContext)
     expect(addVulnerability).to.have.been.calledOnce
     expect(addVulnerability).to.have.been.calledWithMatch({}, { type: 'WEAK_HASH' })
   })

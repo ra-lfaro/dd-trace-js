@@ -35,6 +35,10 @@ describe('IAST Taint tracking plugin', () => {
   it('Should taint full object', () => {
     const transactionId = 'TRANSACTION_ID'
     const iastContext = { [taintTrackingOperations.IAST_TRANSACTION_ID]: transactionId }
+    const iastPluginContext = {
+      store: {},
+      iastContext
+    }
     const originType = 'ORIGIN_TYPE'
     const objToBeTainted = {
       foo: {
@@ -48,13 +52,17 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, null, iastContext)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, null, iastPluginContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(iastContext, objToBeTainted, originType)
   })
 
   it('Should taint property in object', () => {
     const transactionId = 'TRANSACTION_ID'
     const iastContext = { [taintTrackingOperations.IAST_TRANSACTION_ID]: transactionId }
+    const iastPluginContext = {
+      store: {},
+      iastContext
+    }
     const originType = 'ORIGIN_TYPE'
     const propertyToBeTainted = 'foo'
     const objToBeTainted = {
@@ -69,7 +77,7 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastContext)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastPluginContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(
       iastContext,
       objToBeTainted[propertyToBeTainted],
@@ -80,6 +88,10 @@ describe('IAST Taint tracking plugin', () => {
   it('Should taint property in object with circular refs', () => {
     const transactionId = 'TRANSACTION_ID'
     const iastContext = { [taintTrackingOperations.IAST_TRANSACTION_ID]: transactionId }
+    const iastPluginContext = {
+      store: {},
+      iastContext
+    }
     const originType = 'ORIGIN_TYPE'
     const propertyToBeTainted = 'foo'
     const objToBeTainted = {
@@ -96,7 +108,7 @@ describe('IAST Taint tracking plugin', () => {
       iastContext
     )
 
-    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastContext)
+    taintTrackingPlugin._taintTrackingHandler(originType, objToBeTainted, propertyToBeTainted, iastPluginContext)
     expect(taintTrackingOperations.taintObject).to.be.calledOnceWith(
       iastContext,
       objToBeTainted[propertyToBeTainted],

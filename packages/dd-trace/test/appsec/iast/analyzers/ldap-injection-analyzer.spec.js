@@ -54,6 +54,10 @@ describe('ldap-injection-analyzer', () => {
         }
       }
     }
+    const iastPluginContext = {
+      store: {},
+      iastContext
+    }
     const ProxyAnalyzer = proxyquire('../../../../src/appsec/iast/analyzers/vulnerability-analyzer', {
       '../iast-context': {
         getIastContext: () => iastContext
@@ -69,7 +73,7 @@ describe('ldap-injection-analyzer', () => {
       {
         './injection-analyzer': InjectionAnalyzer
       })
-    proxiedLdapInjectionAnalyzer.analyze(TAINTED_QUERY, iastContext)
+    proxiedLdapInjectionAnalyzer.analyze(TAINTED_QUERY, iastPluginContext)
     expect(addVulnerability).to.have.been.calledOnce
     expect(addVulnerability).to.have.been.calledWithMatch({}, { type: 'LDAP_INJECTION' })
   })

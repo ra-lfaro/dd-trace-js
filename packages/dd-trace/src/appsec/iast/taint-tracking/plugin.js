@@ -12,14 +12,17 @@ class TaintTrackingPlugin extends SourceIastPlugin {
   onConfigure () {
     this.addSub(
       { channelName: 'datadog:body-parser:read:finish', tag: HTTP_REQUEST_BODY },
-      ({ request }, iastContext) => this._taintTrackingHandler(HTTP_REQUEST_BODY, request, 'body', iastContext)
+      ({ request }, iastPluginContext) =>
+        this._taintTrackingHandler(HTTP_REQUEST_BODY, request, 'body', iastPluginContext)
     )
     this.addSub(
       { channelName: 'datadog:qs:parse:finish', tag: HTTP_REQUEST_PARAMETER },
-      ({ qs }, iastContext) => this._taintTrackingHandler(HTTP_REQUEST_PARAMETER, qs, null, iastContext))
+      ({ qs }, iastPluginContext) =>
+        this._taintTrackingHandler(HTTP_REQUEST_PARAMETER, qs, null, iastPluginContext))
   }
 
-  _taintTrackingHandler (type, target, property, iastContext) {
+  _taintTrackingHandler (type, target, property, iastPluginContext) {
+    const iastContext = iastPluginContext.iastContext
     if (!property) {
       target = taintObject(iastContext, target, type)
     } else {

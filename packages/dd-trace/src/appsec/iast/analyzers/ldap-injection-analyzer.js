@@ -9,7 +9,7 @@ class LdapInjectionAnalyzer extends InjectionAnalyzer {
   onConfigure () {
     this.addSub(
       { channelName: 'datadog:ldapjs:client:search' },
-      ({ base, filter }, iastContext) => this.analyzeAll(iastContext, base, filter))
+      ({ base, filter }, iastPluginContext) => this.analyzeAll(iastPluginContext, base, filter))
   }
 }
 

@@ -15,7 +15,7 @@ class WeakHashAnalyzer extends Analyzer {
   onConfigure () {
     this.addSub(
       { channelName: 'datadog:crypto:hashing:start' },
-      ({ algorithm }, iastContext) => this.analyze(algorithm, iastContext)
+      ({ algorithm }, iastPluginContext) => this.analyze(algorithm, iastPluginContext)
     )
   }
 

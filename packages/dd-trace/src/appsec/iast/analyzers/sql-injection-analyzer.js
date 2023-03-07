@@ -9,15 +9,15 @@ class SqlInjectionAnalyzer extends InjectionAnalyzer {
   onConfigure () {
     this.addSub(
       { channelName: 'apm:mysql:query:start' },
-      ({ sql }, iastContext) => this.analyze(sql, iastContext)
+      ({ sql }, iastPluginContext) => this.analyze(sql, iastPluginContext)
     )
     this.addSub(
       { channelName: 'apm:mysql2:query:start' },
-      ({ sql }, iastContext) => this.analyze(sql, iastContext)
+      ({ sql }, iastPluginContext) => this.analyze(sql, iastPluginContext)
     )
     this.addSub(
       { channelName: 'apm:pg:query:start' },
-      ({ originalQuery }, iastContext) => this.analyze(originalQuery, iastContext)
+      ({ originalQuery }, iastPluginContext) => this.analyze(originalQuery, iastPluginContext)
     )
   }
 }

@@ -35,8 +35,8 @@ class IastPlugin extends Plugin {
   }
 
   _wrapHandlerTelemetry (handler, thisArg, metric, tag) {
-    return function (message, iastContext, name) {
-      telemetry.increase(metric, tag, iastContext)
+    return function (message, iastPluginContext, name) {
+      telemetry.increase(metric, tag, iastPluginContext.iastContext)
       return handler.apply(thisArg, arguments)
     }
   }
@@ -48,8 +48,10 @@ class IastPlugin extends Plugin {
 
     return (message, name) => {
       try {
-        const iastContext = getIastContext(storage.getStore())
-        handler(message, iastContext, name)
+        const store = storage.getStore()
+        const iastContext = getIastContext(store)
+        const iastPluginContext = { store, iastContext }
+        handler(message, iastPluginContext, name)
       } catch (e) {
         log.error(e)
       }

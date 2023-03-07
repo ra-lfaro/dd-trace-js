@@ -4,7 +4,7 @@ const InjectionAnalyzer = require('./injection-analyzer')
 class PathTraversalAnalyzer extends InjectionAnalyzer {
   constructor () {
     super('PATH_TRAVERSAL')
-    this.addSub({ channelName: 'apm:fs:operation:start' }, (obj, iastContext) => {
+    this.addSub({ channelName: 'apm:fs:operation:start' }, (obj, iastPluginContext) => {
       const pathArguments = []
       if (obj.dest) {
         pathArguments.push(obj.dest)
@@ -33,15 +33,16 @@ class PathTraversalAnalyzer extends InjectionAnalyzer {
       if (obj.target) {
         pathArguments.push(obj.target)
       }
-      this.analyze(pathArguments, iastContext)
+      this.analyze(pathArguments, iastPluginContext)
     })
   }
 
-  analyze (value, iastContext) {
-    if (!iastContext) {
+  analyze (value, iastPluginContext) {
+    if (this._invalidContext(iastPluginContext)) {
       return
     }
 
+    const iastContext = iastPluginContext.iastContext
     if (value && value.constructor === Array) {
       for (const val of value) {
         if (this._isVulnerable(val, iastContext)) {

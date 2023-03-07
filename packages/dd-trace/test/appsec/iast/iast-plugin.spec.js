@@ -13,6 +13,11 @@ describe('IAST Plugin', () => {
   const addSubMock = sinon.stub()
   const configureMock = sinon.stub()
   const getIastContextMock = sinon.stub()
+  const datadogCoreMock = {
+    storage: {
+      getStore: sinon.stub()
+    }
+  }
   class PluginClass {
     addSub (channelName, handler) {
       addSubMock(channelName, handler)
@@ -43,7 +48,8 @@ describe('IAST Plugin', () => {
       },
       './iast-context': {
         getIastContext: getIastContextMock
-      }
+      },
+      '../../../../datadog-core': datadogCoreMock
     })
 
     beforeEach(() => {
@@ -132,11 +138,14 @@ describe('IAST Plugin', () => {
         expect(wrapHandler).to.be.calledOnceWith(handler, getExecutedMetric(SOURCE_TYPE))
       })
 
-      it('source should call original handler providing iast context', () => {
+      it('source should call original handler providing iastPluginContext', () => {
         const context = {
           iast: true
         }
         getIastContextMock.returns(context)
+
+        const store = {}
+        datadogCoreMock.storage.getStore.returns(store)
 
         const sourceHandler = sinon.spy()
         const source = new SourceIastPlugin()
@@ -147,7 +156,11 @@ describe('IAST Plugin', () => {
         const message = { message: 'hello' }
         finalHandler(message, channelName)
 
-        expect(sourceHandler).to.be.calledOnceWith(message, context, channelName)
+        const args = sourceHandler.getCall(0).args
+        expect(args[0]).to.be.eq(message)
+        expect(args[1].iastContext).to.be.eq(context)
+        expect(args[1].store).to.be.eq(store)
+        expect(args[2]).to.be.eq(channelName)
       })
     })
 

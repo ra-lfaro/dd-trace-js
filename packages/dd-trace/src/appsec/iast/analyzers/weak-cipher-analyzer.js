@@ -18,7 +18,7 @@ class WeakCipherAnalyzer extends Analyzer {
   onConfigure () {
     this.addSub(
       { channelName: 'datadog:crypto:cipher:start' },
-      ({ algorithm }, iastContext) => this.analyze(algorithm, iastContext))
+      ({ algorithm }, iastPluginContext) => this.analyze(algorithm, iastPluginContext))
   }
 
   _isVulnerable (algorithm) {
