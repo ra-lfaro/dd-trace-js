@@ -37,8 +37,10 @@ class TelemetryCollector {
   }
 
   merge (metrics) {
-    for (const metricData of metrics) {
-      this.getOrCreateHandler(metricData.metric).merge(metricData)
+    if (metrics) {
+      for (const metricData of metrics) {
+        this.getOrCreateHandler(metricData.metric).merge(metricData)
+      }
     }
   }
 

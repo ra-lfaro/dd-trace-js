@@ -68,10 +68,8 @@ class Telemetry {
     if (!collector) return
 
     const metrics = collector.drainMetrics()
-    if (metrics && metrics.length > 0) {
-      this.addMetricsToSpan(rootSpan, metrics)
-      GLOBAL.merge(metrics)
-    }
+    this.addMetricsToSpan(rootSpan, metrics)
+    GLOBAL.merge(metrics)
   }
 
   flatten (metricData) {
