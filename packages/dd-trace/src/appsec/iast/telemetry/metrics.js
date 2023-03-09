@@ -2,17 +2,22 @@
 
 const { ConflatedCombiner, AggregatedCombiner } = require('./combiners')
 const { DefaultHandler, TaggedHandler, DelegatingHandler } = require('./handlers')
-const { SOURCE_TYPE, VULNERABILITY_TYPE, PROPAGATION_TYPE } = require('./metric-tag')
 
 const Scope = {
   GLOBAL: 'GLOBAL',
   REQUEST: 'REQUEST'
 }
 
-const PropagationTypes = {
+const PropagationType = {
   STRING: 'STRING',
   JSON: 'JSON',
   URL: 'URL'
+}
+
+const MetricTag = {
+  VULNERABILITY_TYPE: 'vulnerability_type',
+  SOURCE_TYPE: 'source_type',
+  PROPAGATION_TYPE: 'propagation_type'
 }
 
 class IastMetric {
@@ -46,20 +51,20 @@ class IastMetric {
 }
 
 function getExecutedMetric (metricTag) {
-  return metricTag === VULNERABILITY_TYPE ? EXECUTED_SINK : EXECUTED_SOURCE
+  return metricTag === MetricTag.VULNERABILITY_TYPE ? EXECUTED_SINK : EXECUTED_SOURCE
 }
 
 function getInstrumentedMetric (metricTag) {
-  return metricTag === VULNERABILITY_TYPE ? INSTRUMENTED_SINK : INSTRUMENTED_SOURCE
+  return metricTag === MetricTag.VULNERABILITY_TYPE ? INSTRUMENTED_SINK : INSTRUMENTED_SOURCE
 }
 
-const INSTRUMENTED_PROPAGATION = new IastMetric('instrumented.propagation', Scope.GLOBAL, PROPAGATION_TYPE)
-const INSTRUMENTED_SOURCE = new IastMetric('instrumented.source', Scope.GLOBAL, SOURCE_TYPE)
-const INSTRUMENTED_SINK = new IastMetric('instrumented.sink', Scope.GLOBAL, VULNERABILITY_TYPE)
+const INSTRUMENTED_PROPAGATION = new IastMetric('instrumented.propagation', Scope.GLOBAL, MetricTag.PROPAGATION_TYPE)
+const INSTRUMENTED_SOURCE = new IastMetric('instrumented.source', Scope.GLOBAL, MetricTag.SOURCE_TYPE)
+const INSTRUMENTED_SINK = new IastMetric('instrumented.sink', Scope.GLOBAL, MetricTag.VULNERABILITY_TYPE)
 
-const EXECUTED_PROPAGATION = new IastMetric('executed.propagation', Scope.REQUEST, PROPAGATION_TYPE)
-const EXECUTED_SOURCE = new IastMetric('executed.source', Scope.REQUEST, SOURCE_TYPE)
-const EXECUTED_SINK = new IastMetric('executed.sink', Scope.REQUEST, VULNERABILITY_TYPE)
+const EXECUTED_PROPAGATION = new IastMetric('executed.propagation', Scope.REQUEST, MetricTag.PROPAGATION_TYPE)
+const EXECUTED_SOURCE = new IastMetric('executed.source', Scope.REQUEST, MetricTag.SOURCE_TYPE)
+const EXECUTED_SINK = new IastMetric('executed.sink', Scope.REQUEST, MetricTag.VULNERABILITY_TYPE)
 
 const EXECUTED_TAINTED = new IastMetric('executed.tainted', Scope.REQUEST)
 const REQUEST_TAINTED = new IastMetric('request.tainted', Scope.REQUEST)
@@ -67,7 +72,7 @@ const REQUEST_TAINTED = new IastMetric('request.tainted', Scope.REQUEST)
 const INSTRUMENTATION_TIME = new IastMetric('instrumentation.time', Scope.GLOBAL)
 // const EXECUTION_TIME = new IastMetric('execution.time', Scope.GLOBAL)
 
-const Metrics = {
+const Metric = {
   INSTRUMENTED_PROPAGATION,
   INSTRUMENTED_SOURCE,
   INSTRUMENTED_SINK,
@@ -83,8 +88,8 @@ const Metrics = {
 }
 
 const metrics = new Map()
-for (const iastMetricName in Metrics) {
-  const iastMetric = Metrics[iastMetricName]
+for (const iastMetricName in Metric) {
+  const iastMetric = Metric[iastMetricName]
   metrics.set(iastMetric.name, iastMetric)
 }
 
@@ -93,9 +98,10 @@ function getMetric (metric) {
 }
 
 module.exports = {
-  Metrics,
-  PropagationTypes,
+  Metric,
+  PropagationType,
   Scope,
+  MetricTag,
 
   getMetric,
   getExecutedMetric,

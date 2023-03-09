@@ -3,41 +3,40 @@
 const { expect } = require('chai')
 const { AggregatedCombiner, ConflatedCombiner } = require('../../../../src/appsec/iast/telemetry/combiners')
 const { TaggedHandler, DefaultHandler, DelegatingHandler } = require('../../../../src/appsec/iast/telemetry/handlers')
-const { VULNERABILITY_TYPE, SOURCE_TYPE } = require('../../../../src/appsec/iast/telemetry/metric-tag')
 
-const { Metrics, getMetric, getExecutedMetric, getInstrumentedMetric } =
+const { Metric, MetricTag, getMetric, getExecutedMetric, getInstrumentedMetric } =
   require('../../../../src/appsec/iast/telemetry/metrics')
 
 describe('Metrics', () => {
   describe('getMetric', () => {
     it('should return a metric using its name', () => {
-      const metric = getMetric(Metrics.EXECUTED_PROPAGATION.name)
+      const metric = getMetric(Metric.EXECUTED_PROPAGATION.name)
 
-      expect(metric).to.be.equal(Metrics.EXECUTED_PROPAGATION)
+      expect(metric).to.be.equal(Metric.EXECUTED_PROPAGATION)
     })
 
     it('getExecutedMetric should return a metric depending on tag', () => {
-      let metric = getExecutedMetric(VULNERABILITY_TYPE)
+      let metric = getExecutedMetric(MetricTag.VULNERABILITY_TYPE)
 
-      expect(metric).to.be.equal(Metrics.EXECUTED_SINK)
+      expect(metric).to.be.equal(Metric.EXECUTED_SINK)
 
-      metric = getExecutedMetric(SOURCE_TYPE)
-      expect(metric).to.be.equal(Metrics.EXECUTED_SOURCE)
+      metric = getExecutedMetric(MetricTag.SOURCE_TYPE)
+      expect(metric).to.be.equal(Metric.EXECUTED_SOURCE)
     })
 
     it('getInstrumentedMetric should return a metric depending on tag', () => {
-      let metric = getInstrumentedMetric(VULNERABILITY_TYPE)
+      let metric = getInstrumentedMetric(MetricTag.VULNERABILITY_TYPE)
 
-      expect(metric).to.be.equal(Metrics.INSTRUMENTED_SINK)
+      expect(metric).to.be.equal(Metric.INSTRUMENTED_SINK)
 
-      metric = getInstrumentedMetric(SOURCE_TYPE)
-      expect(metric).to.be.equal(Metrics.INSTRUMENTED_SOURCE)
+      metric = getInstrumentedMetric(MetricTag.SOURCE_TYPE)
+      expect(metric).to.be.equal(Metric.INSTRUMENTED_SOURCE)
     })
   })
 
   describe('handlers', () => {
     it('aggregated should return a TaggedHandler when invoked on a metric with tag', () => {
-      const handler = Metrics.EXECUTED_PROPAGATION.aggregated()
+      const handler = Metric.EXECUTED_PROPAGATION.aggregated()
 
       expect(handler).to.not.be.undefined
       expect(handler).to.be.an.instanceOf(TaggedHandler)
@@ -45,7 +44,7 @@ describe('Metrics', () => {
     })
 
     it('aggregated should return a DefaultHandler when invoked on a metric without tag', () => {
-      const handler = Metrics.REQUEST_TAINTED.aggregated()
+      const handler = Metric.REQUEST_TAINTED.aggregated()
 
       expect(handler).to.not.be.undefined
       expect(handler).to.be.an.instanceOf(DefaultHandler)
@@ -53,7 +52,7 @@ describe('Metrics', () => {
     })
 
     it('conflated should return a TaggedHandler when invoked on a metric with tag', () => {
-      const handler = Metrics.EXECUTED_PROPAGATION.conflated()
+      const handler = Metric.EXECUTED_PROPAGATION.conflated()
 
       expect(handler).to.not.be.undefined
       expect(handler).to.be.an.instanceOf(TaggedHandler)
@@ -61,7 +60,7 @@ describe('Metrics', () => {
     })
 
     it('conflated should return a DefaultHandler when invoked on a metric without tag', () => {
-      const handler = Metrics.REQUEST_TAINTED.conflated()
+      const handler = Metric.REQUEST_TAINTED.conflated()
 
       expect(handler).to.not.be.undefined
       expect(handler).to.be.an.instanceOf(DefaultHandler)
@@ -70,7 +69,7 @@ describe('Metrics', () => {
 
     it('delegating should return a DelegatingHandler', () => {
       const collector = {}
-      const handler = Metrics.REQUEST_TAINTED.delegating(collector)
+      const handler = Metric.REQUEST_TAINTED.delegating(collector)
 
       expect(handler).to.not.be.undefined
       expect(handler).to.be.an.instanceOf(DelegatingHandler)

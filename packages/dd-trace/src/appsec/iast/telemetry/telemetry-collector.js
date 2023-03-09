@@ -3,7 +3,7 @@
 const { getMetric } = require('./metrics')
 const { log } = require('../../../log')
 const IAST_NAMESPACE = 'iast'
-const IAST_TELEMETRY_COLECTOR = Symbol('_dd.iast.telemetryCollector')
+const IAST_TELEMETRY_COLLECTOR = Symbol('_dd.iast.telemetryCollector')
 
 class TelemetryCollector {
   constructor (builders) {
@@ -55,7 +55,7 @@ const GLOBAL = new TelemetryCollector(metric => metric.hasRequestScope()
 function getActiveRequestContext (context) {
   if (context) return context
 
-  // TODO: get context from span!
+  // TODO: get context from span?
   return null
 }
 
@@ -63,7 +63,7 @@ function getCollector (metric, context) {
   if (metric && metric.hasRequestScope()) {
     context = getActiveRequestContext(context)
     if (context) {
-      const telemetryCollector = context[IAST_TELEMETRY_COLECTOR]
+      const telemetryCollector = context[IAST_TELEMETRY_COLLECTOR]
       if (telemetryCollector) {
         return telemetryCollector
       }
@@ -79,12 +79,12 @@ function initTelemetryCollector (iastContext) {
     ? metric.conflated()
     : metric.delegating(GLOBAL)
   )
-  iastContext[IAST_TELEMETRY_COLECTOR] = collector
+  iastContext[IAST_TELEMETRY_COLLECTOR] = collector
   return collector
 }
 
 function getTelemetryCollectorFromContext (iastContext) {
-  return iastContext && iastContext[IAST_TELEMETRY_COLECTOR]
+  return iastContext && iastContext[IAST_TELEMETRY_COLLECTOR]
 }
 
 function inc (metric, tag, context) {
@@ -144,5 +144,5 @@ module.exports = {
   TelemetryCollector,
 
   GLOBAL,
-  IAST_TELEMETRY_COLECTOR
+  IAST_TELEMETRY_COLLECTOR
 }

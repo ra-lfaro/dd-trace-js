@@ -4,8 +4,7 @@ const { channel } = require('diagnostics_channel')
 const log = require('../../log')
 const Plugin = require('../../plugins/plugin')
 const telemetry = require('./telemetry')
-const { getInstrumentedMetric, getExecutedMetric } = require('./telemetry/metrics')
-const { VULNERABILITY_TYPE, SOURCE_TYPE } = require('./telemetry/metric-tag')
+const { getInstrumentedMetric, getExecutedMetric, MetricTag } = require('./telemetry/metrics')
 const { storage } = require('../../../../datadog-core')
 const { getIastContext } = require('./iast-context')
 
@@ -23,7 +22,7 @@ class IastPluginSubscription {
     this.moduleName = moduleName
     this.channelName = channelName
     this.tag = tag
-    this.metricTag = metricTag || VULNERABILITY_TYPE
+    this.metricTag = metricTag || MetricTag.VULNERABILITY_TYPE
   }
 }
 
@@ -128,13 +127,13 @@ class IastPlugin extends Plugin {
 
 class SourceIastPlugin extends IastPlugin {
   addSub (iastPluginSub, handler) {
-    return super.addSub({ metricTag: SOURCE_TYPE, ...iastPluginSub }, handler)
+    return super.addSub({ metricTag: MetricTag.SOURCE_TYPE, ...iastPluginSub }, handler)
   }
 }
 
 class SinkIastPlugin extends IastPlugin {
   addSub (iastPluginSub, handler) {
-    return super.addSub({ metricTag: VULNERABILITY_TYPE, ...iastPluginSub }, handler)
+    return super.addSub({ metricTag: MetricTag.VULNERABILITY_TYPE, ...iastPluginSub }, handler)
   }
 }
 

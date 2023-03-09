@@ -5,7 +5,7 @@ const { storage } = require('../../../../../datadog-core')
 const iastContextFunctions = require('../iast-context')
 const log = require('../../../log')
 const telemetry = require('../telemetry')
-const { Metrics, PropagationTypes } = require('../telemetry/metrics')
+const { Metric, PropagationType } = require('../telemetry/metrics')
 
 function noop (res) { return res }
 // NOTE: methods of this object must be synchronized with csi-methods.js file definitions!
@@ -32,7 +32,7 @@ function getContextDefault () {
 
 function getContextDebug () {
   const iastContext = getContextDefault()
-  telemetry.increase(Metrics.EXECUTED_PROPAGATION, PropagationTypes.STRING, iastContext)
+  telemetry.increase(Metric.EXECUTED_PROPAGATION, PropagationType.STRING, iastContext)
   return iastContext
 }
 

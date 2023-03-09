@@ -3,8 +3,10 @@
 const { expect } = require('chai')
 const { channel } = require('diagnostics_channel')
 const proxyquire = require('proxyquire')
-const { VULNERABILITY_TYPE, SOURCE_TYPE } = require('../../../src/appsec/iast/telemetry/metric-tag')
-const { getExecutedMetric, getInstrumentedMetric } = require('../../../src/appsec/iast/telemetry/metrics')
+const { getExecutedMetric, getInstrumentedMetric, MetricTag } = require('../../../src/appsec/iast/telemetry/metrics')
+
+const VULNERABILITY_TYPE = MetricTag.VULNERABILITY_TYPE
+const SOURCE_TYPE = MetricTag.SOURCE_TYPE
 
 describe('IAST Plugin', () => {
   const loadChannel = channel('dd-trace:instrumentation:load')

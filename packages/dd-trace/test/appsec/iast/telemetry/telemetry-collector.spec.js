@@ -1,15 +1,15 @@
 'use strict'
 
 const { expect } = require('chai')
-const { Metrics } = require('../../../../src/appsec/iast/telemetry/metrics')
+const { Metric } = require('../../../../src/appsec/iast/telemetry/metrics')
 const { inc, getCollector, initTelemetryCollector, getTelemetryCollectorFromContext, drain
-  , IAST_TELEMETRY_COLECTOR, GLOBAL
+  , IAST_TELEMETRY_COLLECTOR, GLOBAL
   , TelemetryCollector } =
   require('../../../../src/appsec/iast/telemetry/telemetry-collector')
 
-const INSTRUMENTED_PROPAGATION = Metrics.INSTRUMENTED_PROPAGATION
-const INSTRUMENTED_SOURCE = Metrics.INSTRUMENTED_SOURCE
-const REQUEST_TAINTED = Metrics.REQUEST_TAINTED
+const INSTRUMENTED_PROPAGATION = Metric.INSTRUMENTED_PROPAGATION
+const INSTRUMENTED_SOURCE = Metric.INSTRUMENTED_SOURCE
+const REQUEST_TAINTED = Metric.REQUEST_TAINTED
 
 function getHandler (metric) {
   return getCollector(metric).handlers.get(metric)
@@ -213,7 +213,7 @@ describe('IAST TelemetryCollector', () => {
       const collector = initTelemetryCollector(context)
 
       expect(collector).to.not.be.undefined
-      expect(context[IAST_TELEMETRY_COLECTOR]).to.not.be.undefined
+      expect(context[IAST_TELEMETRY_COLLECTOR]).to.not.be.undefined
 
       expect(collector).to.be.eq(getTelemetryCollectorFromContext(context))
     })

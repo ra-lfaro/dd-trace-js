@@ -4,7 +4,7 @@ const { expect } = require('chai')
 const proxyquire = require('proxyquire')
 const iastContextFunctions = require('../../../../src/appsec/iast/iast-context')
 const telemetry = require('../../../../src/appsec/iast/telemetry')
-const { Metrics, PropagationTypes } = require('../../../../src/appsec/iast/telemetry/metrics')
+const { Metric, PropagationType } = require('../../../../src/appsec/iast/telemetry/metrics')
 const { getExpectedMethods } = require('../../../../src/appsec/iast/taint-tracking/csi-methods')
 const { Verbosity } = require('../../../../src/appsec/iast/telemetry/verbosity')
 
@@ -125,7 +125,7 @@ describe('IAST TaintTracking Operations', () => {
       taintTrackingOperations.enableTaintOperations(telemetry.verbosity)
       taintTrackingOperations.removeTransaction(iastContext)
 
-      expect(telemetryAddMock).to.be.calledOnceWith(Metrics.REQUEST_TAINTED, 5, null, iastContext)
+      expect(telemetryAddMock).to.be.calledOnceWith(Metric.REQUEST_TAINTED, 5, null, iastContext)
     })
   })
 
@@ -175,7 +175,7 @@ describe('IAST TaintTracking Operations', () => {
       global._ddiast.plusOperator('helloworld', 'hello', 'world')
       expect(taintedUtils.concat).to.be.called
 
-      expect(telemetryIncreaseMock).to.be.calledOnceWith(Metrics.EXECUTED_PROPAGATION, PropagationTypes.STRING)
+      expect(telemetryIncreaseMock).to.be.calledOnceWith(Metric.EXECUTED_PROPAGATION, PropagationType.STRING)
     })
   })
 

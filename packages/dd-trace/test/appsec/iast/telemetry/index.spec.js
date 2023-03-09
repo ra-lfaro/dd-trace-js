@@ -3,7 +3,7 @@
 const { expect } = require('chai')
 const proxyquire = require('proxyquire')
 const { Verbosity } = require('../../../../src/appsec/iast/telemetry/verbosity')
-const { Metrics } = require('../../../../src/appsec/iast/telemetry/metrics')
+const { Metric } = require('../../../../src/appsec/iast/telemetry/metrics')
 
 const TAG_PREFIX = '_dd.instrumentation_telemetry_data.iast'
 
@@ -99,7 +99,7 @@ describe('Telemetry', () => {
 
     it('should set a rootSpan tag with the flattened value of the metric', () => {
       const metrics = [{
-        metric: Metrics.REQUEST_TAINTED,
+        metric: Metric.REQUEST_TAINTED,
         points: [{ value: 5 }, { value: 5 }]
       }]
 
@@ -115,21 +115,21 @@ describe('Telemetry', () => {
       expect(rootSpan.addTags).to.be.called
 
       const tag = rootSpan.addTags.getCalls()[0].args[0]
-      expect(tag).to.has.property(`${TAG_PREFIX}.${Metrics.REQUEST_TAINTED.name}`)
-      expect(tag[`${TAG_PREFIX}.${Metrics.REQUEST_TAINTED.name}`]).to.be.eq(10)
+      expect(tag).to.has.property(`${TAG_PREFIX}.${Metric.REQUEST_TAINTED.name}`)
+      expect(tag[`${TAG_PREFIX}.${Metric.REQUEST_TAINTED.name}`]).to.be.eq(10)
     })
 
     it('should set as many rootSpan tags as different request scoped metrics', () => {
       const metrics = [{
-        metric: Metrics.REQUEST_TAINTED,
+        metric: Metric.REQUEST_TAINTED,
         points: [{ value: 5 }, { value: 5 }]
       },
       {
-        metric: Metrics.EXECUTED_SINK,
+        metric: Metric.EXECUTED_SINK,
         points: [{ value: 1 }]
       },
       {
-        metric: Metrics.REQUEST_TAINTED,
+        metric: Metric.REQUEST_TAINTED,
         points: [{ value: 5 }]
       }]
 
@@ -146,17 +146,17 @@ describe('Telemetry', () => {
 
       const calls = rootSpan.addTags.getCalls()
       const reqTaintedTag = calls[0].args[0]
-      expect(reqTaintedTag).to.has.property(`${TAG_PREFIX}.${Metrics.REQUEST_TAINTED.name}`)
-      expect(reqTaintedTag[`${TAG_PREFIX}.${Metrics.REQUEST_TAINTED.name}`]).to.be.eq(15)
+      expect(reqTaintedTag).to.has.property(`${TAG_PREFIX}.${Metric.REQUEST_TAINTED.name}`)
+      expect(reqTaintedTag[`${TAG_PREFIX}.${Metric.REQUEST_TAINTED.name}`]).to.be.eq(15)
 
       const execSinkTag = calls[1].args[0]
-      expect(execSinkTag).to.has.property(`${TAG_PREFIX}.${Metrics.EXECUTED_SINK.name}`)
-      expect(execSinkTag[`${TAG_PREFIX}.${Metrics.EXECUTED_SINK.name}`]).to.be.eq(1)
+      expect(execSinkTag).to.has.property(`${TAG_PREFIX}.${Metric.EXECUTED_SINK.name}`)
+      expect(execSinkTag[`${TAG_PREFIX}.${Metric.EXECUTED_SINK.name}`]).to.be.eq(1)
     })
 
     it('should set filter out global scoped metrics', () => {
       const metrics = [{
-        metric: Metrics.INSTRUMENTED_PROPAGATION,
+        metric: Metric.INSTRUMENTED_PROPAGATION,
         points: [{ value: 5 }, { value: 5 }]
       }]
 
@@ -174,11 +174,11 @@ describe('Telemetry', () => {
 
     it('should merge all kind of metrics in GLOBAL collector', () => {
       const metrics = [{
-        metric: Metrics.REQUEST_TAINTED,
+        metric: Metric.REQUEST_TAINTED,
         points: [{ value: 5 }, { value: 5 }]
       },
       {
-        metric: Metrics.INSTRUMENTED_PROPAGATION,
+        metric: Metric.INSTRUMENTED_PROPAGATION,
         points: [{ value: 1 }]
       }]
 
@@ -197,7 +197,7 @@ describe('Telemetry', () => {
         points: [{ value: 5 }, { value: 5 }]
       },
       {
-        metric: Metrics.INSTRUMENTED_PROPAGATION
+        metric: Metric.INSTRUMENTED_PROPAGATION
       },
       {}]
 
@@ -221,16 +221,16 @@ describe('Telemetry', () => {
 
     it('should call collector add', () => {
       const iastContext = {}
-      telemetry.add(Metrics.INSTRUMENTED_PROPAGATION, 1, 'tag', iastContext)
+      telemetry.add(Metric.INSTRUMENTED_PROPAGATION, 1, 'tag', iastContext)
 
-      expect(collector.add).to.be.calledOnceWith(Metrics.INSTRUMENTED_PROPAGATION, 1, 'tag', iastContext)
+      expect(collector.add).to.be.calledOnceWith(Metric.INSTRUMENTED_PROPAGATION, 1, 'tag', iastContext)
     })
 
     it('should call collector inc', () => {
       const iastContext = {}
-      telemetry.increase(Metrics.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
+      telemetry.increase(Metric.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
 
-      expect(collector.inc).to.be.calledOnceWith(Metrics.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
+      expect(collector.inc).to.be.calledOnceWith(Metric.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
     })
   })
 })

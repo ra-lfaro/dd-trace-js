@@ -6,7 +6,7 @@ const log = require('../../../log')
 const { isPrivateModule, isNotLibraryFile } = require('./filter')
 const { csiMethods } = require('./csi-methods')
 const telemetry = require('../telemetry')
-const { Metrics, PropagationTypes } = require('../telemetry/metrics')
+const { Metric, PropagationType } = require('../telemetry/metrics')
 const { Verbosity } = require('../telemetry/verbosity')
 
 let rewriter
@@ -50,7 +50,7 @@ const telemetryInformationRewrite = function (content, filename) {
 
   const metrics = response.metrics
   if (metrics && metrics.instrumentedPropagation) {
-    telemetry.add(Metrics.INSTRUMENTED_PROPAGATION, metrics.instrumentedPropagation, PropagationTypes.STRING)
+    telemetry.add(Metric.INSTRUMENTED_PROPAGATION, metrics.instrumentedPropagation, PropagationType.STRING)
   }
 
   return response
@@ -67,7 +67,7 @@ const telemetryDebugRewrite = function (content, filename) {
   }
 
   const rewriteTime = parseInt(process.hrtime.bigint() - start) * 1e-6
-  telemetry.add(Metrics.INSTRUMENTATION_TIME, rewriteTime)
+  telemetry.add(Metric.INSTRUMENTATION_TIME, rewriteTime)
   return response
 }
 
