@@ -3,7 +3,6 @@
 const metrics = require('../../../telemetry/metrics')
 const { Verbosity, isDebugAllowed, isInfoAllowed, parseVerbosity, getName } = require('./verbosity')
 const {
-  inc,
   add,
   drain,
   initTelemetryCollector,
@@ -48,7 +47,7 @@ class Telemetry {
   }
 
   increase (metric, tag, context) {
-    inc(metric, tag, context)
+    add(metric, 1, tag, context)
   }
 
   add (metric, value, tag, context) {

@@ -1,5 +1,7 @@
 'use strict'
 
+const { ConflatedCombiner, AggregatedCombiner } = require('./combiners')
+const { DefaultHandler, TaggedHandler, DelegatingHandler } = require('./handlers')
 const { getMetric } = require('./metrics')
 const { log } = require('../../../log')
 const IAST_NAMESPACE = 'iast'
@@ -49,9 +51,25 @@ class TelemetryCollector {
   }
 }
 
+function aggregated (metric) {
+  return metric.metricTag
+    ? new TaggedHandler(metric, () => new AggregatedCombiner())
+    : new DefaultHandler(metric, new AggregatedCombiner())
+}
+
+function conflated (metric) {
+  return metric.metricTag
+    ? new TaggedHandler(metric, () => new ConflatedCombiner())
+    : new DefaultHandler(metric, new ConflatedCombiner())
+}
+
+function delegating (metric, collector) {
+  return new DelegatingHandler(metric, collector)
+}
+
 const GLOBAL = new TelemetryCollector(metric => metric.hasRequestScope()
-  ? metric.aggregated()
-  : metric.conflated()
+  ? aggregated(metric)
+  : conflated(metric)
 )
 
 function getActiveRequestContext (context) {
@@ -78,8 +96,8 @@ function initTelemetryCollector (iastContext) {
   if (!iastContext) return
 
   const collector = new TelemetryCollector((metric) => metric.hasRequestScope()
-    ? metric.conflated()
-    : metric.delegating(GLOBAL)
+    ? conflated(metric)
+    : delegating(metric, GLOBAL)
   )
   iastContext[IAST_TELEMETRY_COLLECTOR] = collector
   return collector
@@ -89,9 +107,9 @@ function getTelemetryCollectorFromContext (iastContext) {
   return iastContext && iastContext[IAST_TELEMETRY_COLLECTOR]
 }
 
-function inc (metric, tag, context) {
-  add(metric, 1, tag, context)
-}
+// function inc (metric, tag, context) {
+//   add(metric, 1, tag, context)
+// }
 
 function add (metric, value, tag, context) {
   try {
@@ -136,12 +154,15 @@ function drain () {
 }
 
 module.exports = {
-  inc,
   add,
   drain,
   getCollector,
   initTelemetryCollector,
   getTelemetryCollectorFromContext,
+
+  aggregated,
+  conflated,
+  delegating,
 
   TelemetryCollector,
 

@@ -225,12 +225,5 @@ describe('Telemetry', () => {
 
       expect(collector.add).to.be.calledOnceWith(Metric.INSTRUMENTED_PROPAGATION, 1, 'tag', iastContext)
     })
-
-    it('should call collector inc', () => {
-      const iastContext = {}
-      telemetry.increase(Metric.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
-
-      expect(collector.inc).to.be.calledOnceWith(Metric.INSTRUMENTED_PROPAGATION, 'tag', iastContext)
-    })
   })
 })

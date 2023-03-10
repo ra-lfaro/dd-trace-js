@@ -1,8 +1,5 @@
 'use strict'
 
-const { ConflatedCombiner, AggregatedCombiner } = require('./combiners')
-const { DefaultHandler, TaggedHandler, DelegatingHandler } = require('./handlers')
-
 const Scope = {
   GLOBAL: 'GLOBAL',
   REQUEST: 'REQUEST'
@@ -31,22 +28,6 @@ class IastMetric {
 
   hasRequestScope () {
     return this.scope === Scope.REQUEST
-  }
-
-  aggregated () {
-    return this.metricTag
-      ? new TaggedHandler(this, () => new AggregatedCombiner())
-      : new DefaultHandler(this, new AggregatedCombiner())
-  }
-
-  conflated () {
-    return this.metricTag
-      ? new TaggedHandler(this, () => new ConflatedCombiner())
-      : new DefaultHandler(this, new ConflatedCombiner())
-  }
-
-  delegating (collector) {
-    return new DelegatingHandler(this, collector)
   }
 }
 
