@@ -1,7 +1,6 @@
 'use strict'
 
-const { ConflatedCombiner, AggregatedCombiner } = require('./combiners')
-const { DefaultHandler, TaggedHandler, DelegatingHandler } = require('./handlers')
+const { aggregated, conflated, delegating } = require('./handlers')
 const { getMetric } = require('./metrics')
 const { log } = require('../../../log')
 const IAST_NAMESPACE = 'iast'
@@ -51,42 +50,16 @@ class TelemetryCollector {
   }
 }
 
-function aggregated (metric) {
-  return metric.metricTag
-    ? new TaggedHandler(metric, () => new AggregatedCombiner())
-    : new DefaultHandler(metric, new AggregatedCombiner())
-}
-
-function conflated (metric) {
-  return metric.metricTag
-    ? new TaggedHandler(metric, () => new ConflatedCombiner())
-    : new DefaultHandler(metric, new ConflatedCombiner())
-}
-
-function delegating (metric, collector) {
-  return new DelegatingHandler(metric, collector)
-}
-
 const GLOBAL = new TelemetryCollector(metric => metric.hasRequestScope()
   ? aggregated(metric)
   : conflated(metric)
 )
 
-function getActiveRequestContext (context) {
-  if (context) return context
-
-  // TODO: get context from span?
-  return null
-}
-
 function getCollector (metric, context) {
   if (metric && metric.hasRequestScope()) {
-    context = getActiveRequestContext(context)
-    if (context) {
-      const telemetryCollector = context[IAST_TELEMETRY_COLLECTOR]
-      if (telemetryCollector) {
-        return telemetryCollector
-      }
+    const telemetryCollector = getTelemetryCollectorFromContext(context)
+    if (telemetryCollector) {
+      return telemetryCollector
     }
   }
   return GLOBAL
@@ -106,10 +79,6 @@ function initTelemetryCollector (iastContext) {
 function getTelemetryCollectorFromContext (iastContext) {
   return iastContext && iastContext[IAST_TELEMETRY_COLLECTOR]
 }
-
-// function inc (metric, tag, context) {
-//   add(metric, 1, tag, context)
-// }
 
 function add (metric, value, tag, context) {
   try {
@@ -159,10 +128,6 @@ module.exports = {
   getCollector,
   initTelemetryCollector,
   getTelemetryCollectorFromContext,
-
-  aggregated,
-  conflated,
-  delegating,
 
   TelemetryCollector,
 

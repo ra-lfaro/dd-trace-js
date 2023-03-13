@@ -1,5 +1,7 @@
 'use strict'
 
+const { AggregatedCombiner, ConflatedCombiner } = require('./combiners')
+
 class MetricData {
   constructor (metric, points, tag) {
     this.metric = metric
@@ -80,9 +82,29 @@ class DelegatingHandler {
   merge () {}
 }
 
+function aggregated (metric) {
+  return metric.metricTag
+    ? new TaggedHandler(metric, () => new AggregatedCombiner())
+    : new DefaultHandler(metric, new AggregatedCombiner())
+}
+
+function conflated (metric) {
+  return metric.metricTag
+    ? new TaggedHandler(metric, () => new ConflatedCombiner())
+    : new DefaultHandler(metric, new ConflatedCombiner())
+}
+
+function delegating (metric, collector) {
+  return new DelegatingHandler(metric, collector)
+}
+
 module.exports = {
   DefaultHandler,
   TaggedHandler,
   DelegatingHandler,
-  MetricData
+  MetricData,
+
+  aggregated,
+  conflated,
+  delegating
 }

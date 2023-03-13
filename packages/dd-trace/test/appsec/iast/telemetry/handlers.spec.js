@@ -1,9 +1,10 @@
 'use strict'
 
 const { expect } = require('chai')
-const { DefaultHandler, TaggedHandler, DelegatingHandler, MetricData } =
+const { DefaultHandler, TaggedHandler, DelegatingHandler, MetricData, aggregated, conflated, delegating } =
   require('../../../../src/appsec/iast/telemetry/handlers')
-const { Point } = require('../../../../src/appsec/iast/telemetry/combiners')
+const { Point, AggregatedCombiner, ConflatedCombiner } = require('../../../../src/appsec/iast/telemetry/combiners')
+const { Metric } = require('../../../../src/appsec/iast/telemetry/metrics')
 
 function getCombiner (point) {
   return {
@@ -172,6 +173,49 @@ describe('Telemetry Handlers', () => {
       delegatingHandler.add(5, 'this_is_a_tag')
 
       expect(collector.addMetric).to.be.calledOnceWith(taggedMetric, 5, 'this_is_a_tag')
+    })
+  })
+
+  describe('handlers', () => {
+    it('aggregated should return a TaggedHandler when invoked on a metric with tag', () => {
+      const handler = aggregated(Metric.EXECUTED_PROPAGATION)
+
+      expect(handler).to.not.be.undefined
+      expect(handler).to.be.an.instanceOf(TaggedHandler)
+      expect(handler.supplier()).to.be.an.instanceOf(AggregatedCombiner)
+    })
+
+    it('aggregated should return a DefaultHandler when invoked on a metric without tag', () => {
+      const handler = aggregated(Metric.REQUEST_TAINTED)
+
+      expect(handler).to.not.be.undefined
+      expect(handler).to.be.an.instanceOf(DefaultHandler)
+      expect(handler.combiner).to.be.an.instanceOf(AggregatedCombiner)
+    })
+
+    it('conflated should return a TaggedHandler when invoked on a metric with tag', () => {
+      const handler = conflated(Metric.EXECUTED_PROPAGATION)
+
+      expect(handler).to.not.be.undefined
+      expect(handler).to.be.an.instanceOf(TaggedHandler)
+      expect(handler.supplier()).to.be.an.instanceOf(ConflatedCombiner)
+    })
+
+    it('conflated should return a DefaultHandler when invoked on a metric without tag', () => {
+      const handler = conflated(Metric.REQUEST_TAINTED)
+
+      expect(handler).to.not.be.undefined
+      expect(handler).to.be.an.instanceOf(DefaultHandler)
+      expect(handler.combiner).to.be.an.instanceOf(ConflatedCombiner)
+    })
+
+    it('delegating should return a DelegatingHandler', () => {
+      const collector = {}
+      const handler = delegating(Metric.REQUEST_TAINTED, collector)
+
+      expect(handler).to.not.be.undefined
+      expect(handler).to.be.an.instanceOf(DelegatingHandler)
+      expect(handler.collector).to.be.eq(collector)
     })
   })
 })
