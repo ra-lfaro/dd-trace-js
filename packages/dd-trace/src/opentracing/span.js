@@ -32,7 +32,6 @@ class DatadogSpan {
     this._processor = processor
     this._prioritySampler = prioritySampler
     this._store = storage.getStore()
-    this._name = operationName
 
     this._spanContext = this._createContext(parent)
     this._spanContext._name = operationName
@@ -40,6 +39,7 @@ class DatadogSpan {
     this._spanContext._hostname = hostname
 
     this._startTime = fields.startTime || this._getTime()
+    this._duration = undefined
 
     if (DD_TRACE_EXPERIMENTAL_SPAN_COUNTS && finishedRegistry) {
       metrics.increment('runtime.node.spans.unfinished')
@@ -79,7 +79,22 @@ class DatadogSpan {
   }
 
   setOperationName (name) {
+    const oldName = this._spanContext._name
     this._spanContext._name = name
+
+    if (oldName) {
+      // Clear old named span from metrics
+      metrics.decrement('runtime.node.spans.unfinished.by.name', `span_name:${oldName}`)
+      metrics.decrement('runtime.node.spans.open.by.name', `span_name:${oldName}`)
+
+      // Add back to metrics with new name
+      metrics.increment('runtime.node.spans.unfinished.by.name', `span_name:${name}`)
+      metrics.increment('runtime.node.spans.open.by.name', `span_name:${name}`)
+
+      unfinishedRegistry.unregister(this)
+      unfinishedRegistry.register(this, oldName, this)
+    }
+
     return this
   }
 
@@ -120,16 +135,18 @@ class DatadogSpan {
     }
 
     if (DD_TRACE_EXPERIMENTAL_SPAN_COUNTS && finishedRegistry) {
+      const name = this._spanContext._name
+
       metrics.decrement('runtime.node.spans.unfinished')
-      metrics.decrement('runtime.node.spans.unfinished.by.name', `span_name:${this._name}`)
+      metrics.decrement('runtime.node.spans.unfinished.by.name', `span_name:${name}`)
       metrics.increment('runtime.node.spans.finished')
-      metrics.increment('runtime.node.spans.finished.by.name', `span_name:${this._name}`)
+      metrics.increment('runtime.node.spans.finished.by.name', `span_name:${name}`)
 
       metrics.decrement('runtime.node.spans.open') // unfinished for real
-      metrics.decrement('runtime.node.spans.open.by.name', `span_name:${this._name}`)
+      metrics.decrement('runtime.node.spans.open.by.name', `span_name:${name}`)
 
       unfinishedRegistry.unregister(this)
-      finishedRegistry.register(this, this._name)
+      finishedRegistry.register(this, name)
     }
 
     finishTime = parseFloat(finishTime) || this._getTime()

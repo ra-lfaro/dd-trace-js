@@ -62,7 +62,7 @@ const web = {
 
     if (!span) return
 
-    span.context()._name = `${name}.request`
+    span.setOperationName(`${name}.request`)
     span.context()._tags['component'] = name
 
     web.setConfig(req, config)
@@ -92,7 +92,7 @@ const web = {
     let span
 
     if (context.span) {
-      context.span.context()._name = name
+      context.span.setOperationName(name)
       span = context.span
     } else {
       span = web.startChildSpan(tracer, name, req.headers)
